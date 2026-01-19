@@ -499,7 +499,7 @@ function calculateCoverage(basics: PageBasics): Coverage {
 function generatePartnerFriendly(basics: PageBasics, issues: Issue[], severity: Severity): string {
   const lines = [];
   lines.push(`Page: ${basics.title || basics.hostname}`);
-  lines.push(`Accessibility Check: ${severity === "Low" ? "✓ Good" : severity === "Medium" ? "⚠ Needs Work" : "✗ Problems Found"}`);
+  lines.push(`Accessibility Check: ${severity === "Low" ? "Good" : severity === "Medium" ? "Needs Work" : "Problems Found"}`);
   lines.push("");
 
   if (issues.length === 0) {
@@ -796,24 +796,25 @@ export async function POST(req: Request) {
       lines.push("");
       
       if (issues.length === 0) {
-        lines.push("✓ No major accessibility gaps detected");
+        lines.push("Status: No major accessibility gaps detected");
       } else {
-        lines.push(`⚠ ${issues.length} issue type(s) found:`);
+        lines.push(`Status: ${issues.length} issue type(s) found:`);
         for (const issue of issues.slice(0, 5)) {
           lines.push(`  • ${issue.title}`);
         }
       }
       
       lines.push("");
-      lines.push("KEY METRICS:");
-      lines.push(`  • Images: ${basics.images.total} (${basics.images.missingAlt} missing alt text)`);
+      lines.push("KEY METRICS");
+      lines.push(`  Images: ${basics.images.total} (${basics.images.missingAlt} missing alt text)`);
       if (basics.forms.controlsTotal > 0) {
-        lines.push(`  • Form Controls: ${basics.forms.controlsTotal} (${basics.forms.controlsUnlabeledEstimate} unlabeled)`);
+        lines.push(`  Form Controls: ${basics.forms.controlsTotal} (${basics.forms.controlsUnlabeledEstimate} unlabeled)`);
       }
-      lines.push(`  • Links: ${basics.links.total} (${basics.links.internal} internal)`);
+      lines.push(`  Links: ${basics.links.total} (${basics.links.internal} internal)`);
       
       lines.push("");
-      lines.push("COMPLIANCE LEVEL: " + (severity === "High" ? "🔴 At Risk" : severity === "Medium" ? "🟡 Attention Needed" : "🟢 Good"));
+      lines.push("COMPLIANCE LEVEL");
+      lines.push(severity === "High" ? "  Status: At Risk" : severity === "Medium" ? "  Status: Attention Needed" : "  Status: Good");
       
       lines.push("");
       if (worstPages.byMissingAlt.length > 0) {
@@ -850,25 +851,22 @@ export async function POST(req: Request) {
     ): string => {
       const lines: string[] = [];
       
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("ACCESSIBILITY AUDIT REPORT - STANDARDIZED FORMAT");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       lines.push(`URL: ${basics.finalUrl}`);
       lines.push(`Generated: ${new Date().toISOString().split('T')[0]}`);
       lines.push("");
       
       // TOTAL NUMBER OF ISSUES
-      lines.push("─────────────────────────────────────────────────────────────────");
-      lines.push(`TOTAL NUMBER OF ISSUES: ${issues.length}`);
-      lines.push("─────────────────────────────────────────────────────────────────");
+      lines.push("TOTAL NUMBER OF ISSUES");
+      lines.push(`${issues.length}`);
       lines.push("");
       
       // HIGH-IMPACT ISSUES (Level A and Level AA)
       const levelAIssues = issues.filter(i => i.id.includes("alt") || i.id.includes("label") || i.id.includes("form") || i.id.includes("heading"));
-      lines.push("HIGH-IMPACT ISSUES (WCAG Level A & Level AA):");
+      lines.push("HIGH-IMPACT ISSUES (WCAG Level A & Level AA)");
       if (levelAIssues.length === 0) {
-        lines.push("  ✓ No high-impact issues detected");
+        lines.push("  No high-impact issues detected");
       } else {
         levelAIssues.forEach((issue, idx) => {
           lines.push(`  ${idx + 1}. ${issue.title}`);
@@ -906,9 +904,7 @@ export async function POST(req: Request) {
         categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
       });
       
-      lines.push("─────────────────────────────────────────────────────────────────");
-      lines.push("ISSUE CATEGORIES & OCCURRENCE COUNT:");
-      lines.push("─────────────────────────────────────────────────────────────────");
+      lines.push("ISSUE CATEGORIES & OCCURRENCE COUNT");
       
       Object.entries(categories).forEach(([category, categoryIssues]) => {
         if (categoryIssues.length > 0) {
@@ -921,31 +917,28 @@ export async function POST(req: Request) {
       lines.push("");
       
       // TREND ANALYSIS
-      lines.push("─────────────────────────────────────────────────────────────────");
-      lines.push("TREND ANALYSIS - CHANGES SINCE LAST REPORT:");
-      lines.push("─────────────────────────────────────────────────────────────────");
+      lines.push("TREND ANALYSIS - CHANGES SINCE LAST REPORT");
       
       if (!previousFingerprint) {
-        lines.push("  • This is the first scan for this URL (no prior baseline)");
+        lines.push("  This is the first scan for this URL (no prior baseline)");
       } else {
         if (changes?.missingAlt) {
           const altDelta = changes.missingAlt.after - changes.missingAlt.before;
-          const altStatus = altDelta < 0 ? "✓ IMPROVED" : altDelta > 0 ? "⚠ REGRESSED" : "→ STABLE";
-          lines.push(`  • Missing Alt Text: ${changes.missingAlt.before} → ${changes.missingAlt.after} [${altDelta > 0 ? '+' : ''}${altDelta}] ${altStatus}`);
+          const altStatus = altDelta < 0 ? "IMPROVED" : altDelta > 0 ? "REGRESSED" : "STABLE";
+          lines.push(`  Missing Alt Text: ${changes.missingAlt.before} → ${changes.missingAlt.after} [${altDelta > 0 ? '+' : ''}${altDelta}] (${altStatus})`);
         }
         
         if (changes?.unlabeledControls) {
           const controlsDelta = changes.unlabeledControls.after - changes.unlabeledControls.before;
-          const controlsStatus = controlsDelta < 0 ? "✓ IMPROVED" : controlsDelta > 0 ? "⚠ REGRESSED" : "→ STABLE";
-          lines.push(`  • Unlabeled Controls: ${changes.unlabeledControls.before} → ${changes.unlabeledControls.after} [${controlsDelta > 0 ? '+' : ''}${controlsDelta}] ${controlsStatus}`);
+          const controlsStatus = controlsDelta < 0 ? "IMPROVED" : controlsDelta > 0 ? "REGRESSED" : "STABLE";
+          lines.push(`  Unlabeled Controls: ${changes.unlabeledControls.before} → ${changes.unlabeledControls.after} [${controlsDelta > 0 ? '+' : ''}${controlsDelta}] (${controlsStatus})`);
         }
       }
       lines.push("");
       
       // COMPLIANCE SUMMARY
-      lines.push("─────────────────────────────────────────────────────────────────");
-      lines.push(`OVERALL SEVERITY: ${severity}`);
-      lines.push("─────────────────────────────────────────────────────────────────");
+      lines.push("OVERALL SEVERITY");
+      lines.push(severity);
       lines.push("");
       
       return lines.join("\n");
@@ -966,10 +959,8 @@ export async function POST(req: Request) {
       const agencyName = basics.hostname ? basics.hostname.replace("www.", "").split(".")[0].toUpperCase() : "AGENCY";
       
       // HEADER
-      lines.push("╔════════════════════════════════════════════════════════════════════════╗");
-      lines.push("║                 ACCESSIBILITY COMPLIANCE REPORT                       ║");
-      lines.push("║              Virginia Section 508 & VITA IT Compliance                ║");
-      lines.push("╚════════════════════════════════════════════════════════════════════════╝");
+      lines.push("ACCESSIBILITY COMPLIANCE REPORT");
+      lines.push("Virginia Section 508 & VITA IT Compliance");
       lines.push("");
       lines.push(`Report Date: ${reportDate}`);
       lines.push(`Website URL: ${basics.finalUrl}`);
@@ -977,9 +968,7 @@ export async function POST(req: Request) {
       lines.push("");
       
       // 1. INTRODUCTION
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("1. INTRODUCTION");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       lines.push(`This accessibility evaluation of the ${agencyName} website assesses compliance with:`);
       lines.push("  • VITA IT Accessibility Requirements");
@@ -991,9 +980,7 @@ export async function POST(req: Request) {
       lines.push("");
       
       // 2. OVERALL ACCESSIBILITY PERFORMANCE
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("2. OVERALL ACCESSIBILITY PERFORMANCE");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       lines.push("SCAN METRICS:");
       lines.push(`  • Total Pages Scanned: ${scannedPages.length}`);
@@ -1020,11 +1007,9 @@ export async function POST(req: Request) {
       lines.push("");
       
       // 3. HIGH-LEVEL COMPLIANCE SUMMARY
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("3. HIGH-LEVEL COMPLIANCE SUMMARY");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
-      lines.push("WCAG 2.2 A/AA EVALUATION:");
+      lines.push("WCAG 2.2 A/AA EVALUATION");
       lines.push("");
       
       const categoryMap = new Map<string, { count: number; impact: string }>();
@@ -1050,24 +1035,22 @@ export async function POST(req: Request) {
       
       Object.entries(complianceAreas).forEach(([area, description]) => {
         const mapped = categoryMap.get(area);
-        const status = !mapped || mapped.count === 0 ? "✓ PASS" : "✗ NEEDS WORK";
+        const status = !mapped || mapped.count === 0 ? "PASS" : "NEEDS WORK";
         lines.push(`${area}: ${status}`);
         if (mapped?.count) {
           lines.push(`  Issues Found: ${mapped.count}`);
         }
       });
       lines.push("");
-      lines.push("ADDITIONAL CHECKS:");
-      lines.push("  • Contrast Ratios: " + (issues.some(i => i.title.toLowerCase().includes("contrast")) ? "✗ Issues Found" : "✓ Acceptable"));
-      lines.push("  • Form Labels: " + (issues.some(i => i.title.toLowerCase().includes("label")) ? "✗ Issues Found" : "✓ Present"));
-      lines.push("  • ARIA Usage: " + (issues.some(i => i.title.toLowerCase().includes("aria")) ? "✗ Issues Found" : "✓ Compliant"));
-      lines.push("  • PDF Compliance: " + (issues.some(i => i.title.toLowerCase().includes("pdf")) ? "✗ Issues Found" : "✓ Accessible"));
+      lines.push("ADDITIONAL CHECKS");
+      lines.push("  Contrast Ratios: " + (issues.some(i => i.title.toLowerCase().includes("contrast")) ? "Issues Found" : "Acceptable"));
+      lines.push("  Form Labels: " + (issues.some(i => i.title.toLowerCase().includes("label")) ? "Issues Found" : "Present"));
+      lines.push("  ARIA Usage: " + (issues.some(i => i.title.toLowerCase().includes("aria")) ? "Issues Found" : "Compliant"));
+      lines.push("  PDF Compliance: " + (issues.some(i => i.title.toLowerCase().includes("pdf")) ? "Issues Found" : "Accessible"));
       lines.push("");
       
       // 4. KEY ISSUES IDENTIFIED
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("4. KEY ISSUES IDENTIFIED");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       
       if (issues.length === 0) {
@@ -1085,9 +1068,8 @@ export async function POST(req: Request) {
       // 5. REMEDIATION RECOMMENDATIONS
       lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("5. REMEDIATION RECOMMENDATIONS");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
-      lines.push("PRIORITIZED BY SEVERITY:");
+      lines.push("PRIORITIZED BY SEVERITY");
       lines.push("");
       
       const highPriority = issues.filter(i => i.id.includes("alt") || i.id.includes("label") || i.id.includes("keyboard"));
@@ -1095,7 +1077,7 @@ export async function POST(req: Request) {
       const lowPriority = issues.filter(i => !highPriority.includes(i) && !mediumPriority.includes(i));
       
       if (highPriority.length > 0) {
-        lines.push("HIGH PRIORITY (30-60 days):");
+        lines.push("HIGH PRIORITY (30-60 days)");
         highPriority.forEach((issue, idx) => {
           lines.push(`  ${idx + 1}. ${issue.title}`);
           lines.push(`     Rationale: Directly blocks users with disabilities`);
@@ -1105,7 +1087,7 @@ export async function POST(req: Request) {
       }
       
       if (mediumPriority.length > 0) {
-        lines.push("MEDIUM PRIORITY (60-90 days):");
+        lines.push("MEDIUM PRIORITY (60-90 days)");
         mediumPriority.forEach((issue, idx) => {
           lines.push(`  ${idx + 1}. ${issue.title}`);
           lines.push(`     Rationale: Impacts usability but not a complete blocker`);
@@ -1115,7 +1097,7 @@ export async function POST(req: Request) {
       }
       
       if (lowPriority.length > 0) {
-        lines.push("LOW PRIORITY (90+ days):");
+        lines.push("LOW PRIORITY (90+ days)");
         lowPriority.forEach((issue, idx) => {
           lines.push(`  ${idx + 1}. ${issue.title}`);
           lines.push(`     Rationale: Minor enhancements to accessibility`);
@@ -1130,9 +1112,7 @@ export async function POST(req: Request) {
       }
       
       // 6. PROPOSED REMEDIATION PLAN
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("6. PROPOSED ACCESSIBILITY REMEDIATION PLAN");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       lines.push("IMPLEMENTATION PHASES:");
       lines.push("");
@@ -1165,9 +1145,7 @@ export async function POST(req: Request) {
       lines.push("");
       
       // 7. CONCLUSION
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("7. CONCLUSION");
-      lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       lines.push("");
       
       if (issues.length === 0) {
@@ -1190,9 +1168,7 @@ export async function POST(req: Request) {
       lines.push("");
       lines.push("For compliance questions, contact your VITA Accessibility Coordinator.");
       lines.push("");
-      lines.push("═════════════════════════════════════════════════════════════════════════");
       lines.push(`Report Generated: ${new Date().toISOString()}`);
-      lines.push("═════════════════════════════════════════════════════════════════════════");
       
       return lines.join("\n");
     };
