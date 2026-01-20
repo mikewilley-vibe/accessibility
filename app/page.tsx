@@ -489,8 +489,8 @@ async function textToWordDocument(text: string): Promise<Blob> {
                 </div>
               </div>
               
-              {/* Export Buttons Grid */}
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Tyler Report Button (Visible) */}
+              <div className="flex justify-center">
                 <Button
                   onClick={() => onDownloadReport("tylerVirginia", index)}
                   variant="outline"
@@ -499,62 +499,69 @@ async function textToWordDocument(text: string): Promise<Blob> {
                 >
                   📋 Tyler Compliance Report
                 </Button>
-                <Button
-                  onClick={() => onDownloadReport("standardized", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Standardized Report
-                </Button>
-                <Button
-                  onClick={() => onDownloadReport("executive", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Executive Summary
-                </Button>
               </div>
               
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <Button
-                  onClick={() => onDownloadReport("partner", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Partner-Friendly
-                </Button>
-                <Button
-                  onClick={() => onDownloadReport("developer", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Dev Handoff
-                </Button>
-                <Button
-                  onClick={() => onDownloadReport("csv", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ CSV Export
-                </Button>
-                <Button
-                  onClick={() => onDownloadReport("jira", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Jira Format
-                </Button>
-              </div>
-              
-              <div className="flex justify-center">
-                <Button
-                  onClick={() => onDownloadReport("json", index)}
-                  variant="outline"
-                  size="sm"
-                >
-                  ↓ Full JSON
-                </Button>
-              </div>
+              {/* Other Export Buttons (Hidden) */}
+              <details className="text-sm">
+                <summary className="cursor-pointer text-slate-600 hover:text-slate-900">More export formats</summary>
+                <div className="mt-3 space-y-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <Button
+                      onClick={() => onDownloadReport("standardized", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Standardized Report
+                    </Button>
+                    <Button
+                      onClick={() => onDownloadReport("executive", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Executive Summary
+                    </Button>
+                    <Button
+                      onClick={() => onDownloadReport("partner", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Partner-Friendly
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <Button
+                      onClick={() => onDownloadReport("developer", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Dev Handoff
+                    </Button>
+                    <Button
+                      onClick={() => onDownloadReport("csv", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ CSV Export
+                    </Button>
+                    <Button
+                      onClick={() => onDownloadReport("jira", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Jira Format
+                    </Button>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => onDownloadReport("json", index)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      ↓ Full JSON
+                    </Button>
+                  </div>
+                </div>
+              </details>
               
               {/* Display Mode Toggle */}
               <div className="flex gap-2 border-t pt-3 justify-center">
@@ -584,7 +591,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
                 <CardDescription>Plain-English highlights for PMs and partners.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {displayMode === "detailed" && (
+                {displayMode === "executive" && (
                   <div className="space-y-3 border-b pb-3">
                     <div className="text-sm font-semibold text-slate-900">Quick Stats:</div>
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
@@ -643,6 +650,64 @@ async function textToWordDocument(text: string): Promise<Blob> {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Issues breakdown */}
+            {displayMode === "detailed" ? (
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-base">Issues breakdown</CardTitle>
+                <CardDescription>What's happening and typical fixes.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                  {data.issues.map((issue) => (
+                    <AccordionItem key={issue.id} value={issue.id}>
+                      <AccordionTrigger className="text-left">
+                        {issue.title}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2 text-sm text-slate-800">
+                          <p>{issue.description}</p>
+                          <p className="text-slate-700">
+                            <span className="font-medium text-slate-900">Impact:</span>{" "}
+                            {issue.impact}
+                          </p>
+                          <p className="text-slate-700">
+                            <span className="font-medium text-slate-900">Typical fix:</span>{" "}
+                            {issue.typicalFix}
+                          </p>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+
+                <p className="mt-4 text-xs text-slate-500">{data.disclaimer}</p>
+              </CardContent>
+            </Card>
+            ) : (
+            <Card className="rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-base">Issues Summary</CardTitle>
+                <CardDescription>Key findings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {data.issues.length === 0 ? (
+                  <p className="text-sm text-slate-800">✓ No major accessibility issues detected</p>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-900">{data.issues.length} issue type(s) found:</p>
+                    <ul className="list-disc space-y-1 pl-5">
+                      {data.issues.map((issue) => (
+                        <li key={issue.id} className="text-sm text-slate-700">{issue.title}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="mt-4 text-xs text-slate-500">{data.disclaimer}</p>
+              </CardContent>
+            </Card>
+            )}
 
             {/* Why this matters + affected users */}
             <Card className="rounded-2xl">
