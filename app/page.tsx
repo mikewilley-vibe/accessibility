@@ -75,11 +75,11 @@ function generateReportJSON(data: AnalyzeResponse): string {
 }
 
 export default function HomePage() {
-  const [url, setUrl] = React.useState("");
+  const [urls, setUrls] = React.useState<string>("");
   const [statusText, setStatusText] = React.useState(LOADING_MESSAGES[0]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [data, setData] = React.useState<AnalyzeResponse | null>(null);
+  const [results, setResults] = React.useState<AnalyzeResponse[]>([]);
   const [displayMode, setDisplayMode] = React.useState<"executive" | "detailed">("executive");
 
   // Rotate loading messages while loading
@@ -279,8 +279,9 @@ async function textToWordDocument(text: string): Promise<Blob> {
   return await Packer.toBlob(doc);
 }
 
-  async function onDownloadReport(format: "executive" | "partner" | "developer" | "csv" | "jira" | "standardized" | "tylerVirginia" | "json") {
-    if (!data) return;
+  async function onDownloadReport(format: "executive" | "partner" | "developer" | "csv" | "jira" | "standardized" | "tylerVirginia" | "json", dataIndex: number = 0) {
+    if (!results || results.length === 0 || !results[dataIndex]) return;
+    const data = results[dataIndex];
 
     let content = "";
     let filename = "";
@@ -349,39 +350,51 @@ async function textToWordDocument(text: string): Promise<Blob> {
   async function onAnalyze(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setData(null);
+    setResults([]);
 
-    const trimmed = url.trim();
-    if (!trimmed) {
-      setError("Paste a URL to analyze.");
+    const urlList = urls
+      .split("\n")
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+
+    if (urlList.length === 0) {
+      setError("Paste at least one URL to analyze.");
       return;
     }
 
-    // Lightweight URL validation
-    try {
-      // Allow users to paste without protocol
-      const normalized = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-      new URL(normalized);
-      setLoading(true);
+    setLoading(true);
+    const analyzedResults: AnalyzeResponse[] = [];
 
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: normalized }),
-      });
+    for (let i = 0; i < urlList.length; i++) {
+      try {
+        const trimmed = urlList[i];
+        const normalized = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+        new URL(normalized);
 
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || "Request failed");
+        setStatusText(`Analyzing ${i + 1} of ${urlList.length}…`);
+
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: normalized }),
+        });
+
+        if (!res.ok) {
+          const msg = await res.text();
+          throw new Error(msg || "Request failed");
+        }
+
+        const json = (await res.json()) as AnalyzeResponse;
+        analyzedResults.push(json);
+      } catch (err: any) {
+        setError(`Error analyzing URL ${i + 1}: ${err?.message ?? "Something went wrong."}`);
+        setLoading(false);
+        return;
       }
-
-      const json = (await res.json()) as AnalyzeResponse;
-      setData(json);
-    } catch (err: any) {
-      setError(err?.message ?? "Something went wrong.");
-    } finally {
-      setLoading(false);
     }
+
+    setResults(analyzedResults);
+    setLoading(false);
   }
 
   return (
@@ -415,23 +428,23 @@ async function textToWordDocument(text: string): Promise<Blob> {
 
             <CardContent className="space-y-4">
               <form onSubmit={onAnalyze} className="space-y-3">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Input
+                <div className="flex flex-col gap-3">
+                  <textarea
                     id="url-input"
-                    name="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://example.gov"
-                    className="h-11"
-                    aria-label="Website URL"
-                    autoComplete="url"
+                    name="urls"
+                    value={urls}
+                    onChange={(e) => setUrls(e.target.value)}
+                    placeholder="https://example.gov&#10;https://another.gov&#10;example.org"
+                    className="h-32 rounded-md border border-slate-200 px-3 py-2 font-mono text-sm"
+                    aria-label="Website URLs (one per line)"
                   />
-                  <Button type="submit" className="h-11 sm:w-40" disabled={loading}>
-                    {loading ? "Analyzing…" : "Analyze site"}
+                  <Button type="submit" className="h-11 w-full sm:w-40" disabled={loading}>
+                    {loading ? "Analyzing…" : "Analyze sites"}
                   </Button>
                 </div>
 
                 <div className="flex flex-col gap-1 text-xs text-slate-500">
+                  <span>Enter one URL per line.</span>
                   <span>This does not perform a full audit.</span>
                   <span>Results are high-level and explanatory.</span>
                 </div>
@@ -456,8 +469,10 @@ async function textToWordDocument(text: string): Promise<Blob> {
         </div>
 
         {/* RESULTS */}
-        {data ? (
-          <div className="mx-auto mt-10 max-w-3xl space-y-6">
+        {results && results.length > 0 ? (
+          <div className="mx-auto mt-10 max-w-3xl space-y-8">
+            {results.map((data, index) => (
+          <div key={index} className="space-y-6 border-b pb-8 last:border-b-0">
             {/* Coverage Badge + Display Mode Toggle + Action Buttons */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -477,7 +492,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
               {/* Export Buttons Grid */}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <Button
-                  onClick={() => onDownloadReport("tylerVirginia")}
+                  onClick={() => onDownloadReport("tylerVirginia", index)}
                   variant="outline"
                   size="sm"
                   className="font-semibold"
@@ -485,14 +500,14 @@ async function textToWordDocument(text: string): Promise<Blob> {
                   📋 Tyler Compliance Report
                 </Button>
                 <Button
-                  onClick={() => onDownloadReport("standardized")}
+                  onClick={() => onDownloadReport("standardized", index)}
                   variant="outline"
                   size="sm"
                 >
                   ↓ Standardized Report
                 </Button>
                 <Button
-                  onClick={() => onDownloadReport("executive")}
+                  onClick={() => onDownloadReport("executive", index)}
                   variant="outline"
                   size="sm"
                 >
@@ -502,28 +517,28 @@ async function textToWordDocument(text: string): Promise<Blob> {
               
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <Button
-                  onClick={() => onDownloadReport("partner")}
+                  onClick={() => onDownloadReport("partner", index)}
                   variant="outline"
                   size="sm"
                 >
                   ↓ Partner-Friendly
                 </Button>
                 <Button
-                  onClick={() => onDownloadReport("developer")}
+                  onClick={() => onDownloadReport("developer", index)}
                   variant="outline"
                   size="sm"
                 >
                   ↓ Dev Handoff
                 </Button>
                 <Button
-                  onClick={() => onDownloadReport("csv")}
+                  onClick={() => onDownloadReport("csv", index)}
                   variant="outline"
                   size="sm"
                 >
                   ↓ CSV Export
                 </Button>
                 <Button
-                  onClick={() => onDownloadReport("jira")}
+                  onClick={() => onDownloadReport("jira", index)}
                   variant="outline"
                   size="sm"
                 >
@@ -533,7 +548,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
               
               <div className="flex justify-center">
                 <Button
-                  onClick={() => onDownloadReport("json")}
+                  onClick={() => onDownloadReport("json", index)}
                   variant="outline"
                   size="sm"
                 >
@@ -854,6 +869,8 @@ async function textToWordDocument(text: string): Promise<Blob> {
                 </CardContent>
               </Card>
             )}
+          </div>
+            ))}
           </div>
         ) : null}
 
