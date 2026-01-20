@@ -335,7 +335,11 @@ export default function HomePage() {
             <span className="text-lg font-semibold tracking-tight text-slate-900">Accessibly</span>
             <span className="text-sm text-slate-500">Section 508 & VITA compliance checker.</span>
           </div>
-          <div className="text-xs text-slate-500">V1</div>
+          <a href="/evidence">
+            <Button variant="outline" size="sm">
+              Compliance Evidence
+            </Button>
+          </a>
         </div>
       </header>
 

@@ -1,0 +1,40 @@
+{
+  "organization": {
+    "id": "0b6e3ca4-2ae3-4832-bd5e-9b2e160869f4",
+    "organizationName": "Virginia State Council of Higher Education",
+    "adoptedStandards": [
+      "WCAG 2.2 A/AA",
+      "Section 508",
+      "VITA"
+    ],
+    "adoptionDate": "2026-01-20",
+    "policyStatement": "SCHEV is committed to ensuring all digital assets are accessible to citizens with disabilities in compliance with Section 508 of the Rehabilitation Act and VITA accessibility standards.",
+    "lastUpdated": "2026-01-20T15:42:41.536Z"
+  },
+  "assets": [
+    {
+      "id": "4bf8e739-d875-4a6e-8915-e0094f0a5d1c",
+      "name": "Main Website",
+      "url": "https://www.schev.edu",
+      "type": "Website",
+      "environment": "Production",
+      "owner": "John Doe",
+      "publicFacing": true,
+      "description": "Primary public-facing website for SCHEV",
+      "criticalService": true,
+      "createdAt": "2026-01-20T15:42:51.857Z",
+      "lastUpdated": "2026-01-20T15:42:51.857Z"
+    }
+  ],
+  "scans": [],
+  "issues": [],
+  "remediationTasks": [],
+  "workflow": {
+    "id": "workflow-default",
+    "organizationId": "org-default",
+    "contentChecklist": [],
+    "developmentChecklist": [],
+    "procurementChecklist": [],
+    "lastUpdated": "2026-01-20T15:42:41.536Z"
+  }
+}
