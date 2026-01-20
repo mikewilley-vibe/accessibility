@@ -101,12 +101,10 @@ async function textToWordDocument(text: string): Promise<Blob> {
   // (Looks identical to humans, prevents blue hyperlink styling.)
   const deLinkify = (s: string) => s.replace(/https?:\/\//g, (m) => m.replace("://", ":\u200B//"));
 
-  const makeRun = (t: string, opts?: { bold?: boolean }) =>
+  const makeRun = (t: string) =>
     new TextRun({
       text: deLinkify(t),
-      bold: opts?.bold ?? false,
       color: "000000", // force black
-      underline: {},   // explicit none can be finicky; leaving empty avoids link underline
     });
 
   const isDivider = (s: string) =>
@@ -137,7 +135,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
 
   paragraphs.push(
     new Paragraph({
-      children: [makeRun(TITLE, { bold: true })],
+      children: [makeRun(TITLE)],
       heading: HeadingLevel.TITLE,
       alignment: "center",
       spacing: { before: 100, after: 150 },
@@ -213,14 +211,14 @@ async function textToWordDocument(text: string): Promise<Blob> {
       continue;
     }
 
-    // Key/value => bullet with bold label
+    // Key/value => bullet with regular text
     if (isKeyValue(trimmed)) {
       const match = trimmed.match(/^([^:]{2,60}):\s*(.+)$/);
       const label = match?.[1]?.trim() ?? "";
       const value = match?.[2]?.trim() ?? "";
       paragraphs.push(
         new Paragraph({
-          children: [makeRun(`${label}: `, { bold: true }), makeRun(value)],
+          children: [makeRun(`${label}: ${value}`)],
           bullet: { level: 0 },
           spacing: { after: 50 },
         })
@@ -247,7 +245,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
           basedOn: "Normal",
           next: "Normal",
           quickFormat: true,
-          run: { color: "000000", bold: true },
+          run: { color: "000000" },
         },
         {
           id: "Heading1",
@@ -255,7 +253,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
           basedOn: "Normal",
           next: "Normal",
           quickFormat: true,
-          run: { color: "000000", bold: true },
+          run: { color: "000000" },
         },
         {
           id: "Heading2",
@@ -263,7 +261,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
           basedOn: "Normal",
           next: "Normal",
           quickFormat: true,
-          run: { color: "000000", bold: true },
+          run: { color: "000000" },
         },
         {
           id: "Heading3",
@@ -271,7 +269,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
           basedOn: "Normal",
           next: "Normal",
           quickFormat: true,
-          run: { color: "000000", bold: true },
+          run: { color: "000000" },
         },
       ],
     },
