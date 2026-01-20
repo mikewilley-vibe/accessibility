@@ -93,103 +93,82 @@ export default function HomePage() {
     return () => clearInterval(t);
   }, [loading]);
 
-  async function textToWordDocument(text: string): Promise<Blob> {
+async function textToWordDocument(text: string): Promise<Blob> {
   const TITLE = "ACCESSIBILITY COMPLIANCE REPORT";
   const SUBTITLE = "Virginia Section 508 & VITA IT Compliance";
 
-  const lines = text.split("\n");
-  const paragraphs: Paragraph[] = [];
+  // Insert a zero-width space after ":" so Word won't auto-detect as a hyperlink.
+  // (Looks identical to humans, prevents blue hyperlink styling.)
+  const deLinkify = (s: string) => s.replace(/https?:\/\//g, (m) => m.replace("://", ":\u200B//"));
 
-  // ---------- helpers ----------
-  const isDivider = (s: string) =>
-    /^[═╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬─│┌┐└┘├┤┬┴┼\-=*_]{3,}$/.test(s);
-
-  const isAllCaps = (s: string) => s.length > 3 && s === s.toUpperCase();
-
-  const stripLeadingNumber = (s: string) => s.replace(/^\d+\.\s*/, "");
-
-  const makeBlackRun = (t: string, bold = false) =>
+  const makeRun = (t: string, opts?: { bold?: boolean }) =>
     new TextRun({
-      text: t,
-      bold,
-      color: "000000",      // force black (prevents theme blue)
-     
+      text: deLinkify(t),
+      bold: opts?.bold ?? false,
+      color: "000000", // force black
+      underline: {},   // explicit none can be finicky; leaving empty avoids link underline
     });
 
-  const addBlank = (after = 100) =>
-    paragraphs.push(new Paragraph({ text: "", spacing: { after } }));
+  const isDivider = (s: string) =>
+    /^[═╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬─│┌┐└┘├┤┬┴┼\-=*_]{3,}$/.test(s) ||
+    /^={3,}$/.test(s) || /^-{3,}$/.test(s) || /^\*{3,}$/.test(s) || /^_{3,}$/.test(s);
 
-  const addTitlePage = () => {
-    addBlank(350);
+  const isAllCaps = (s: string) => s.length > 3 && s === s.toUpperCase();
+  const isNumberedAllCaps = (s: string) => /^\d+\.\s+/.test(s) && isAllCaps(s.replace(/^\d+\.\s+/, ""));
+  const isPhase = (s: string) => /^PHASE\s+\d+:/i.test(s);
+  const isBullet = (s: string) => /^[•\-◦]\s+/.test(s);
+  const isKeyValue = (s: string) => /^([^:]{2,60}):\s*(.+)$/.test(s);
 
-    paragraphs.push(
-      new Paragraph({
-        children: [makeBlackRun(TITLE, true)],
-        heading: HeadingLevel.TITLE,
-        alignment: "center",
-        spacing: { before: 100, after: 150 },
-      })
-    );
+  // 1) Split lines
+  let lines = text.split("\n").map((l) => l.trimEnd());
 
-    paragraphs.push(
-      new Paragraph({
-        children: [makeBlackRun(SUBTITLE)],
-        alignment: "center",
-        spacing: { after: 350 },
-      })
-    );
+  // 2) Remove ANY occurrences of TITLE/SUBTITLE anywhere in the body
+  //    (Your sample input has them twice at the top)  [oai_citation:2‡accessibility-compliance-report-1768927521901.docx](sediment://file_00000000732c71fdb9c50bdd1bd41485)
+  lines = lines.filter((l) => {
+    const t = l.trim();
+    if (!t) return true;
+    return t !== TITLE && t !== SUBTITLE;
+  });
 
-    addBlank(150);
-  };
+  const paragraphs: Paragraph[] = [];
 
-  const shouldSkipTopTitle = (() => {
-    // If the incoming content already starts with the title/subtitle,
-    // don't add it again and also drop duplicate occurrences.
-    const firstNonEmpty = lines.find((l) => l.trim())?.trim() ?? "";
-    return firstNonEmpty === TITLE;
-  })();
+  // 3) Add title page ONCE
+  paragraphs.push(new Paragraph({ text: "", spacing: { after: 350 } }));
 
-  // ---------- title page ----------
-  if (!shouldSkipTopTitle) addTitlePage();
+  paragraphs.push(
+    new Paragraph({
+      children: [makeRun(TITLE, { bold: true })],
+      heading: HeadingLevel.TITLE,
+      alignment: "center",
+      spacing: { before: 100, after: 150 },
+    })
+  );
 
-  // Track whether we've already seen the TITLE/SUBTITLE in the body (to remove duplicates)
-  let sawTitle = false;
-  let sawSubtitle = false;
+  paragraphs.push(
+    new Paragraph({
+      children: [makeRun(SUBTITLE)],
+      alignment: "center",
+      spacing: { after: 350 },
+    })
+  );
 
-  // ---------- body ----------
+  paragraphs.push(new Paragraph({ text: "", spacing: { after: 150 } }));
+
+  // 4) Body content with hierarchy
   for (const raw of lines) {
     const trimmed = raw.trim();
 
     if (!trimmed) {
-      addBlank(80);
+      paragraphs.push(new Paragraph({ text: "", spacing: { after: 80 } }));
       continue;
     }
     if (isDivider(trimmed)) continue;
 
-    // Remove duplicate title/subtitle anywhere in the body
-    if (trimmed === TITLE) {
-      if (sawTitle || !shouldSkipTopTitle) {
-        sawTitle = true;
-        continue;
-      }
-      // if shouldSkipTopTitle = true, we are already skipping body title lines
-      sawTitle = true;
-      continue;
-    }
-    if (trimmed === SUBTITLE) {
-      if (sawSubtitle || !shouldSkipTopTitle) {
-        sawSubtitle = true;
-        continue;
-      }
-      sawSubtitle = true;
-      continue;
-    }
-
-    // Numbered section headers: "1. INTRODUCTION"
-    if (/^\d+\.\s+/.test(trimmed) && isAllCaps(stripLeadingNumber(trimmed))) {
+    // Numbered section headers => H1
+    if (isNumberedAllCaps(trimmed)) {
       paragraphs.push(
         new Paragraph({
-          children: [makeBlackRun(trimmed)],
+          children: [makeRun(trimmed)],
           heading: HeadingLevel.HEADING_1,
           spacing: { before: 220, after: 120 },
         })
@@ -197,11 +176,11 @@ export default function HomePage() {
       continue;
     }
 
-    // Subtitles / groupings under numbered sections: "SCAN METRICS:"
+    // All-caps groupings under numbered titles => H2 (subtitles)
     if (isAllCaps(trimmed) && (trimmed.endsWith(":") || trimmed.length >= 6)) {
       paragraphs.push(
         new Paragraph({
-          children: [makeBlackRun(trimmed)],
+          children: [makeRun(trimmed)],
           heading: HeadingLevel.HEADING_2,
           spacing: { before: 180, after: 80 },
         })
@@ -209,11 +188,11 @@ export default function HomePage() {
       continue;
     }
 
-    // Phase hierarchy: "PHASE 1: ...."
-    if (/^PHASE\s+\d+:/i.test(trimmed)) {
+    // Phase lines => H3
+    if (isPhase(trimmed)) {
       paragraphs.push(
         new Paragraph({
-          children: [makeBlackRun(trimmed)],
+          children: [makeRun(trimmed)],
           heading: HeadingLevel.HEADING_3,
           spacing: { before: 150, after: 60 },
         })
@@ -221,12 +200,12 @@ export default function HomePage() {
       continue;
     }
 
-    // Bullets: "• thing"
-    if (/^[•\-◦]\s+/.test(trimmed)) {
+    // Bullets
+    if (isBullet(trimmed)) {
       const bulletText = trimmed.replace(/^[•\-◦]\s+/, "");
       paragraphs.push(
         new Paragraph({
-          children: [makeBlackRun(bulletText)],
+          children: [makeRun(bulletText)],
           bullet: { level: 0 },
           spacing: { after: 60 },
         })
@@ -234,15 +213,14 @@ export default function HomePage() {
       continue;
     }
 
-    // Key/value lines: "Label: Value" -> make as bullet with bold label
-    const kv = trimmed.match(/^([^:]{2,60}):\s*(.+)$/);
-    if (kv) {
-      const label = kv[1].trim();
-      const value = kv[2].trim();
-
+    // Key/value => bullet with bold label
+    if (isKeyValue(trimmed)) {
+      const match = trimmed.match(/^([^:]{2,60}):\s*(.+)$/);
+      const label = match?.[1]?.trim() ?? "";
+      const value = match?.[2]?.trim() ?? "";
       paragraphs.push(
         new Paragraph({
-          children: [makeBlackRun(`${label}: `, true), makeBlackRun(value)],
+          children: [makeRun(`${label}: `, { bold: true }), makeRun(value)],
           bullet: { level: 0 },
           spacing: { after: 50 },
         })
@@ -253,13 +231,50 @@ export default function HomePage() {
     // Regular paragraph
     paragraphs.push(
       new Paragraph({
-        children: [makeBlackRun(trimmed)],
+        children: [makeRun(trimmed)],
         spacing: { after: 90 },
       })
     );
   }
 
+  // 5) Explicitly force heading styles to black (prevents theme-blue headings)
   const doc = new Document({
+    styles: {
+      paragraphStyles: [
+        {
+          id: "Title",
+          name: "Title",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { color: "000000", bold: true },
+        },
+        {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { color: "000000", bold: true },
+        },
+        {
+          id: "Heading2",
+          name: "Heading 2",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { color: "000000", bold: true },
+        },
+        {
+          id: "Heading3",
+          name: "Heading 3",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { color: "000000", bold: true },
+        },
+      ],
+    },
     sections: [{ children: paragraphs }],
   });
 
