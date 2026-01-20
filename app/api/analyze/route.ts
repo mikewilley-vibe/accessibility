@@ -248,22 +248,25 @@ async function crawlSite(baseUrl: string, maxPages = 50, totalTimeoutMs = 12000)
   const scannedPages: string[] = [];
   const startTime = Date.now();
   
-  // Create a limiter for 5 concurrent requests
-  const limit = createLimiter(5);
+  // Create a limiter for 3 concurrent requests (reduced to be friendlier to servers)
+  const limit = createLimiter(3);
   
   // Queue of active fetch promises
   const activePromises: Promise<void>[] = [];
   
-  // Per-page timeout: 5 seconds
-  const PER_PAGE_TIMEOUT = 5000;
+  // Per-page timeout: 8 seconds (increased from 5 to be more tolerant)
+  const PER_PAGE_TIMEOUT = 8000;
+  
+  // Small delay between requests to avoid aggressive crawling patterns
+  const REQUEST_DELAY = 300; // ms
 
   while ((toVisit.length > 0 || activePromises.length > 0) && visited.size < maxPages && Date.now() - startTime < totalTimeoutMs) {
     // If we have capacity and pages to visit, queue new fetches
-    while (toVisit.length > 0 && activePromises.length < 5) {
+    while (toVisit.length > 0 && activePromises.length < 3) {
       // Early stop check: if we're running out of time, stop queuing new pages
       const timeElapsed = Date.now() - startTime;
-      if (timeElapsed > totalTimeoutMs * 0.8) {
-        // 80% of time used, stop queueing more
+      if (timeElapsed > totalTimeoutMs * 0.7) {
+        // 70% of time used, stop queueing more (gives buffer for pending requests)
         console.log("Approaching total timeout, stopping new page queue");
         break;
       }
@@ -279,6 +282,8 @@ async function crawlSite(baseUrl: string, maxPages = 50, totalTimeoutMs = 12000)
       const fetchPromise = limit(async () => {
         try {
           console.log(`Crawling (score): ${currentUrl}`);
+          // Add small delay before fetching to avoid aggressive crawling
+          await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY));
           const { html } = await fetchHtml(currentUrl, PER_PAGE_TIMEOUT);
           htmlPages.push(html);
           console.log(`Successfully fetched page ${visited.size}/${maxPages}`);
@@ -573,7 +578,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const crawlResult = await crawlSite(normalized);
+    const crawlResult = await crawlSite(normalized, 50, 25000);
     const htmlPages = crawlResult.pages;
     const scannedPages = crawlResult.scanned;
 
