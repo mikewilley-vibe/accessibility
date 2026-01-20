@@ -94,133 +94,177 @@ export default function HomePage() {
   }, [loading]);
 
   async function textToWordDocument(text: string): Promise<Blob> {
-    const lines = text.split("\n");
-    const paragraphs: any[] = [];
+  const TITLE = "ACCESSIBILITY COMPLIANCE REPORT";
+  const SUBTITLE = "Virginia Section 508 & VITA IT Compliance";
 
-    // Add title page with professional formatting
-    paragraphs.push(
-      new Paragraph({
-        text: "",
-        spacing: { after: 400 },
-      })
-    );
+  const lines = text.split("\n");
+  const paragraphs: Paragraph[] = [];
 
-    paragraphs.push(
-      new Paragraph({
-        text: "ACCESSIBILITY COMPLIANCE REPORT",
-        heading: "Heading1",
-        alignment: "center",
-        spacing: { before: 100, after: 200 },
-      })
-    );
+  // ---------- helpers ----------
+  const isDivider = (s: string) =>
+    /^[═╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬─│┌┐└┘├┤┬┴┼\-=*_]{3,}$/.test(s);
 
-    paragraphs.push(
-      new Paragraph({
-        text: "Virginia Section 508 & VITA IT Compliance",
-        alignment: "center",
-        spacing: { after: 400 },
-      })
-    );
+  const isAllCaps = (s: string) => s.length > 3 && s === s.toUpperCase();
 
-    paragraphs.push(
-      new Paragraph({
-        text: "",
-        spacing: { after: 300 },
-      })
-    );
+  const stripLeadingNumber = (s: string) => s.replace(/^\d+\.\s*/, "");
 
-    // Process content
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      // Skip ALL ASCII characters: dividers, box drawing, borders, etc.
-      if (trimmed.match(/^[═╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬─│┌┐└┘├┤┬┴┼═\-=_*/]{3,}$/)) {
-        continue;
-      }
-
-      // Skip all divider lines (===, ---, ***, ___)
-      if (trimmed.match(/^={3,}$/) || trimmed.match(/^-{3,}$/) || trimmed.match(/^\*{3,}$/) || trimmed.match(/^_{3,}$/)) {
-        continue;
-      }
-
-      // Skip lines that are mostly box-drawing characters
-      if (trimmed.match(/^[╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬═│┌┐└┘├┤┬┴┼]/)) {
-        continue;
-      }
-
-      if (!trimmed) {
-        // Empty line for spacing
-        paragraphs.push(new Paragraph({ text: "", spacing: { after: 100 } }));
-        continue;
-      }
-
-      // Detect all-caps section titles (e.g., "1. INTRODUCTION")
-      if (trimmed.toUpperCase() === trimmed && trimmed.length > 3) {
-        paragraphs.push(
-          new Paragraph({
-            text: trimmed,
-            heading: "Heading1",
-            spacing: { before: 200, after: 100 },
-          })
-        );
-        continue;
-      }
-
-      // Detect subsection headers (e.g., "Key Findings:")
-      if (trimmed.match(/^[A-Z][A-Za-z\s0-9]+:$/)) {
-        paragraphs.push(
-          new Paragraph({
-            text: trimmed,
-            heading: "Heading2",
-            spacing: { before: 150, after: 80 },
-          })
-        );
-        continue;
-      }
-
-      // Detect bullet points
-      if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("◦")) {
-        const bulletText = trimmed.replace(/^[•\-◦]\s*/, "");
-        paragraphs.push(
-          new Paragraph({
-            text: bulletText,
-            bullet: { level: 0 },
-            spacing: { after: 60 },
-          })
-        );
-        continue;
-      }
-
-      // Detect numbered items
-      if (trimmed.match(/^\d+\.\s/)) {
-        const numberText = trimmed.replace(/^\d+\.\s*/, "");
-        paragraphs.push(
-          new Paragraph({
-            text: numberText,
-            spacing: { after: 60 },
-          })
-        );
-        continue;
-      }
-
-      // Regular paragraph text
-      paragraphs.push(
-        new Paragraph({
-          text: trimmed,
-          spacing: { after: 80 },
-        })
-      );
-    }
-
-    const doc = new Document({
-      sections: [{
-        children: paragraphs,
-      }],
+  const makeBlackRun = (t: string, bold = false) =>
+    new TextRun({
+      text: t,
+      bold,
+      color: "000000",      // force black (prevents theme blue)
+     
     });
 
-    const blob = await Packer.toBlob(doc);
-    return blob;
+  const addBlank = (after = 100) =>
+    paragraphs.push(new Paragraph({ text: "", spacing: { after } }));
+
+  const addTitlePage = () => {
+    addBlank(350);
+
+    paragraphs.push(
+      new Paragraph({
+        children: [makeBlackRun(TITLE, true)],
+        heading: HeadingLevel.TITLE,
+        alignment: "center",
+        spacing: { before: 100, after: 150 },
+      })
+    );
+
+    paragraphs.push(
+      new Paragraph({
+        children: [makeBlackRun(SUBTITLE)],
+        alignment: "center",
+        spacing: { after: 350 },
+      })
+    );
+
+    addBlank(150);
+  };
+
+  const shouldSkipTopTitle = (() => {
+    // If the incoming content already starts with the title/subtitle,
+    // don't add it again and also drop duplicate occurrences.
+    const firstNonEmpty = lines.find((l) => l.trim())?.trim() ?? "";
+    return firstNonEmpty === TITLE;
+  })();
+
+  // ---------- title page ----------
+  if (!shouldSkipTopTitle) addTitlePage();
+
+  // Track whether we've already seen the TITLE/SUBTITLE in the body (to remove duplicates)
+  let sawTitle = false;
+  let sawSubtitle = false;
+
+  // ---------- body ----------
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+
+    if (!trimmed) {
+      addBlank(80);
+      continue;
+    }
+    if (isDivider(trimmed)) continue;
+
+    // Remove duplicate title/subtitle anywhere in the body
+    if (trimmed === TITLE) {
+      if (sawTitle || !shouldSkipTopTitle) {
+        sawTitle = true;
+        continue;
+      }
+      // if shouldSkipTopTitle = true, we are already skipping body title lines
+      sawTitle = true;
+      continue;
+    }
+    if (trimmed === SUBTITLE) {
+      if (sawSubtitle || !shouldSkipTopTitle) {
+        sawSubtitle = true;
+        continue;
+      }
+      sawSubtitle = true;
+      continue;
+    }
+
+    // Numbered section headers: "1. INTRODUCTION"
+    if (/^\d+\.\s+/.test(trimmed) && isAllCaps(stripLeadingNumber(trimmed))) {
+      paragraphs.push(
+        new Paragraph({
+          children: [makeBlackRun(trimmed)],
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 220, after: 120 },
+        })
+      );
+      continue;
+    }
+
+    // Subtitles / groupings under numbered sections: "SCAN METRICS:"
+    if (isAllCaps(trimmed) && (trimmed.endsWith(":") || trimmed.length >= 6)) {
+      paragraphs.push(
+        new Paragraph({
+          children: [makeBlackRun(trimmed)],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 180, after: 80 },
+        })
+      );
+      continue;
+    }
+
+    // Phase hierarchy: "PHASE 1: ...."
+    if (/^PHASE\s+\d+:/i.test(trimmed)) {
+      paragraphs.push(
+        new Paragraph({
+          children: [makeBlackRun(trimmed)],
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 150, after: 60 },
+        })
+      );
+      continue;
+    }
+
+    // Bullets: "• thing"
+    if (/^[•\-◦]\s+/.test(trimmed)) {
+      const bulletText = trimmed.replace(/^[•\-◦]\s+/, "");
+      paragraphs.push(
+        new Paragraph({
+          children: [makeBlackRun(bulletText)],
+          bullet: { level: 0 },
+          spacing: { after: 60 },
+        })
+      );
+      continue;
+    }
+
+    // Key/value lines: "Label: Value" -> make as bullet with bold label
+    const kv = trimmed.match(/^([^:]{2,60}):\s*(.+)$/);
+    if (kv) {
+      const label = kv[1].trim();
+      const value = kv[2].trim();
+
+      paragraphs.push(
+        new Paragraph({
+          children: [makeBlackRun(`${label}: `, true), makeBlackRun(value)],
+          bullet: { level: 0 },
+          spacing: { after: 50 },
+        })
+      );
+      continue;
+    }
+
+    // Regular paragraph
+    paragraphs.push(
+      new Paragraph({
+        children: [makeBlackRun(trimmed)],
+        spacing: { after: 90 },
+      })
+    );
   }
+
+  const doc = new Document({
+    sections: [{ children: paragraphs }],
+  });
+
+  return await Packer.toBlob(doc);
+}
 
   async function onDownloadReport(format: "executive" | "partner" | "developer" | "csv" | "jira" | "standardized" | "tylerVirginia" | "json") {
     if (!data) return;
