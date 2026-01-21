@@ -406,7 +406,7 @@ async function textToWordDocument(text: string): Promise<Blob> {
             <span className="text-sm text-slate-500">Section 508 & VITA compliance checker.</span>
           </div>
           <Button asChild variant="outline" size="sm">
-            <a href={results && results.length > 0 ? `/evidence?url=${encodeURIComponent(results[0].url)}` : "/evidence"}>
+            <a href={results && results.length > 0 ? `/evidence?url=${encodeURIComponent(results[0].url)}&data=${encodeURIComponent(JSON.stringify(results[0]))}` : "/evidence"}>
               Compliance Evidence
             </a>
           </Button>

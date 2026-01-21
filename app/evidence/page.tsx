@@ -19,14 +19,75 @@ import { RemediationPlanView } from "@/components/evidence/RemediationPlanView";
 export default function EvidencePage() {
   const [activeTab, setActiveTab] = useState("standards");
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
+  const [scanData, setScanData] = useState<any>(null);
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const url = searchParams.get("url");
+    const dataStr = searchParams.get("data");
+    
     if (url) {
       setWebsiteUrl(url);
     }
+    
+    if (dataStr) {
+      try {
+        const data = JSON.parse(dataStr);
+        setScanData(data);
+        // Auto-register asset and record scan
+        registerAssetAndScan(url, data);
+      } catch (error) {
+        console.error("Error parsing scan data:", error);
+      }
+    }
   }, [searchParams]);
+
+  async function registerAssetAndScan(url: string | null, data: any) {
+    if (!url || !data) return;
+
+    try {
+      // Extract hostname for asset name
+      const hostname = new URL(url).hostname;
+      
+      // 1. Register asset
+      const assetResponse = await fetch("/api/evidence/assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: hostname,
+          url: url,
+          type: "Website",
+          environment: "Production",
+          owner: "System",
+          publicFacing: true,
+          criticalService: false,
+        }),
+      });
+
+      const asset = await assetResponse.json();
+      const assetId = asset.id;
+
+      // 2. Record scan results
+      if (assetId) {
+        await fetch(`/api/evidence/scans/${assetId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pagesSampled: data.pagesSampledCount || 0,
+            totalImages: data.basics?.images?.total || 0,
+            missingAltCount: data.issues?.filter((i: any) => i.title.includes("alt text")).length || 0,
+            totalControls: data.basics?.controls?.total || 0,
+            unlabeledControlsCount: data.issues?.filter((i: any) => i.title.includes("label")).length || 0,
+            issuesFound: data.issues?.length || 0,
+            overallCoverage: data.coverage || "Good",
+            keyFindings: data.summaryBullets || [],
+          }),
+        });
+      }
+    } catch (error) {
+      console.error("Error registering asset or scan:", error);
+    }
+  }
 
   async function handleExport(type: string) {
     try {

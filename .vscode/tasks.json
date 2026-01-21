@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Git Commit and Push",
+			"type": "shell",
+			"command": "git add -A && git commit -m 'Transfer scan data from analyzer to evidence page and auto-register assets with scan results' && git push origin main"
+		}
+	]
+}
