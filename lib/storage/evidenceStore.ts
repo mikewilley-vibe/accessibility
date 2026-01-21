@@ -44,8 +44,14 @@ export function loadDatabase(): ProgramDatabase {
 
 // Save database to disk
 export function saveDatabase(db: ProgramDatabase): void {
-  ensureDataDir();
-  fs.writeFileSync(PROGRAM_FILE, JSON.stringify(db, null, 2), "utf-8");
+  try {
+    ensureDataDir();
+    fs.writeFileSync(PROGRAM_FILE, JSON.stringify(db, null, 2), "utf-8");
+    console.log("Database saved successfully to", PROGRAM_FILE);
+  } catch (error) {
+    console.error("Error saving database to", PROGRAM_FILE, ":", error);
+    throw new Error(`Failed to save database: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // Default empty database

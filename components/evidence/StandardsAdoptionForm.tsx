@@ -48,6 +48,8 @@ export function StandardsAdoptionForm() {
 
     try {
       setSaving(true);
+      console.log("Saving standards:", { organizationName, selectedStandards, policyStatement });
+      
       const response = await fetch("/api/evidence/standards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,17 +60,22 @@ export function StandardsAdoptionForm() {
         }),
       });
 
+      const data = await response.json();
+      console.log("API Response status:", response.status);
+      console.log("API Response data:", data);
+
       if (!response.ok) {
-        throw new Error("Failed to save standards");
+        const errorMsg = data.error || `HTTP ${response.status}`;
+        throw new Error(errorMsg);
       }
 
-      const data = await response.json();
       setStandards(data);
       setMessage("Standards saved successfully!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("Error saving standards:", error);
-      setMessage("Error saving standards");
+      setMessage(`Error saving standards: ${errorMsg}`);
     } finally {
       setSaving(false);
     }

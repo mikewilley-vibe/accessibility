@@ -1,15 +1,15 @@
 {
   "organization": {
-    "id": "0b6e3ca4-2ae3-4832-bd5e-9b2e160869f4",
-    "organizationName": "Virginia State Council of Higher Education",
+    "id": "1e0612b3-91fb-4706-8e53-6d396ac88be1",
+    "organizationName": "https://www.dpor.virginia.gov/",
     "adoptedStandards": [
       "WCAG 2.2 A/AA",
       "Section 508",
       "VITA"
     ],
-    "adoptionDate": "2026-01-20",
+    "adoptionDate": "2026-01-21",
     "policyStatement": "SCHEV is committed to ensuring all digital assets are accessible to citizens with disabilities in compliance with Section 508 of the Rehabilitation Act and VITA accessibility standards.",
-    "lastUpdated": "2026-01-20T15:42:41.536Z"
+    "lastUpdated": "2026-01-21T18:32:41.519Z"
   },
   "assets": [
     {
@@ -24,9 +24,100 @@
       "criticalService": true,
       "createdAt": "2026-01-20T15:42:51.857Z",
       "lastUpdated": "2026-01-20T15:42:51.857Z"
+    },
+    {
+      "id": "069fc245-56fa-4e0b-8385-fca962ea4b67",
+      "name": "www.dpor.virginia.gov",
+      "url": "https://www.dpor.virginia.gov/",
+      "type": "Website",
+      "environment": "Production",
+      "owner": "System",
+      "publicFacing": true,
+      "criticalService": false,
+      "createdAt": "2026-01-21T18:27:31.108Z",
+      "lastUpdated": "2026-01-21T18:27:31.108Z"
+    },
+    {
+      "id": "25e8dee6-019f-4830-9954-a0788d72f61c",
+      "name": "www.dpor.virginia.gov",
+      "url": "https://www.dpor.virginia.gov/",
+      "type": "Website",
+      "environment": "Production",
+      "owner": "System",
+      "publicFacing": true,
+      "criticalService": false,
+      "createdAt": "2026-01-21T18:30:32.082Z",
+      "lastUpdated": "2026-01-21T18:30:32.083Z"
+    },
+    {
+      "id": "bb30bccc-1fcd-4358-8795-f4954a365b14",
+      "name": "www.dpor.virginia.gov",
+      "url": "https://www.dpor.virginia.gov/",
+      "type": "Website",
+      "environment": "Production",
+      "owner": "System",
+      "publicFacing": true,
+      "criticalService": false,
+      "createdAt": "2026-01-21T18:32:06.606Z",
+      "lastUpdated": "2026-01-21T18:32:06.606Z"
     }
   ],
-  "scans": [],
+  "scans": [
+    {
+      "id": "6d77d34e-1402-4a80-946e-269687df6542",
+      "assetId": "069fc245-56fa-4e0b-8385-fca962ea4b67",
+      "scanDate": "2026-01-21T18:27:31.998Z",
+      "pagesSampled": 50,
+      "totalImages": 134,
+      "missingAltCount": 0,
+      "totalControls": 0,
+      "unlabeledControlsCount": 0,
+      "issuesFound": 0,
+      "overallCoverage": "Good",
+      "keyFindings": [
+        "Page title: \"DPOR Home Page | Virginia Department of Professional and Occupational Regulation\".",
+        "Scanned 50 page(s) sampled from key sections. Found 1215 unique links (918 internal, 297 external).",
+        "Found 53 form(s) and 50 form controls across the sampled pages.",
+        "Found 134 image(s) across the sampled pages; 0 missing alt text."
+      ]
+    },
+    {
+      "id": "022ad969-ed29-4822-aac0-70b32b61418a",
+      "assetId": "25e8dee6-019f-4830-9954-a0788d72f61c",
+      "scanDate": "2026-01-21T18:30:32.909Z",
+      "pagesSampled": 50,
+      "totalImages": 134,
+      "missingAltCount": 0,
+      "totalControls": 0,
+      "unlabeledControlsCount": 0,
+      "issuesFound": 0,
+      "overallCoverage": "Good",
+      "keyFindings": [
+        "Page title: \"DPOR Home Page | Virginia Department of Professional and Occupational Regulation\".",
+        "Scanned 50 page(s) sampled from key sections. Found 1215 unique links (918 internal, 297 external).",
+        "Found 53 form(s) and 50 form controls across the sampled pages.",
+        "Found 134 image(s) across the sampled pages; 0 missing alt text."
+      ]
+    },
+    {
+      "id": "256761d6-8d63-4254-82cb-7d35df941083",
+      "assetId": "bb30bccc-1fcd-4358-8795-f4954a365b14",
+      "scanDate": "2026-01-21T18:32:08.135Z",
+      "pagesSampled": 50,
+      "totalImages": 134,
+      "missingAltCount": 0,
+      "totalControls": 0,
+      "unlabeledControlsCount": 0,
+      "issuesFound": 0,
+      "overallCoverage": "Good",
+      "keyFindings": [
+        "Page title: \"DPOR Home Page | Virginia Department of Professional and Occupational Regulation\".",
+        "Scanned 50 page(s) sampled from key sections. Found 1215 unique links (918 internal, 297 external).",
+        "Found 53 form(s) and 50 form controls across the sampled pages.",
+        "Found 134 image(s) across the sampled pages; 0 missing alt text."
+      ]
+    }
+  ],
   "issues": [],
   "remediationTasks": [],
   "workflow": {
