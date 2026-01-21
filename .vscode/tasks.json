@@ -5,6 +5,11 @@
 			"label": "Git Commit and Push",
 			"type": "shell",
 			"command": "git add -A && git commit -m 'Transfer scan data from analyzer to evidence page and auto-register assets with scan results' && git push origin main"
+		},
+		{
+			"label": "Build Project",
+			"type": "shell",
+			"command": "npm run build"
 		}
 	]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { AssetInventoryForm } from "@/components/evidence/AssetInventoryForm";
 import { PrioritizationBacklogView } from "@/components/evidence/PrioritizationBacklogView";
 import { RemediationPlanView } from "@/components/evidence/RemediationPlanView";
 
-export default function EvidencePage() {
+function EvidencePageContent() {
   const [activeTab, setActiveTab] = useState("standards");
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
   const [scanData, setScanData] = useState<any>(null);
@@ -295,5 +295,13 @@ export default function EvidencePage() {
         </Accordion>
       </div>
     </div>
+  );
+}
+
+export default function EvidencePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 p-6">Loading...</div>}>
+      <EvidencePageContent />
+    </Suspense>
   );
 }
