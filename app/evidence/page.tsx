@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +18,15 @@ import { RemediationPlanView } from "@/components/evidence/RemediationPlanView";
 
 export default function EvidencePage() {
   const [activeTab, setActiveTab] = useState("standards");
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const url = searchParams.get("url");
+    if (url) {
+      setWebsiteUrl(url);
+    }
+  }, [searchParams]);
 
   async function handleExport(type: string) {
     try {
@@ -102,7 +112,7 @@ export default function EvidencePage() {
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 py-4 border-t">
-              <AssetInventoryForm />
+              <AssetInventoryForm defaultUrl={websiteUrl || undefined} />
             </AccordionContent>
           </AccordionItem>
 

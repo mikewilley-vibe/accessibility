@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { DigitalAsset } from "@/lib/types/evidence";
 
-export function AssetInventoryForm() {
+export function AssetInventoryForm({ defaultUrl }: { defaultUrl?: string }) {
   const [assets, setAssets] = useState<DigitalAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    url: "",
+    url: defaultUrl || "",
     type: "Website",
     environment: "Production",
     owner: "",
@@ -23,7 +23,11 @@ export function AssetInventoryForm() {
 
   useEffect(() => {
     fetchAssets();
-  }, []);
+    // Pre-populate URL if provided
+    if (defaultUrl) {
+      setFormData(prev => ({ ...prev, url: defaultUrl }));
+    }
+  }, [defaultUrl]);
 
   async function fetchAssets() {
     try {
