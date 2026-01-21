@@ -1,7 +1,7 @@
 {
   "organization": {
-    "id": "1e0612b3-91fb-4706-8e53-6d396ac88be1",
-    "organizationName": "https://www.dpor.virginia.gov/",
+    "id": "3dcd9ce3-e8c1-4a81-beed-7ae83ebae079",
+    "organizationName": "dars",
     "adoptedStandards": [
       "WCAG 2.2 A/AA",
       "Section 508",
@@ -9,7 +9,7 @@
     ],
     "adoptionDate": "2026-01-21",
     "policyStatement": "SCHEV is committed to ensuring all digital assets are accessible to citizens with disabilities in compliance with Section 508 of the Rehabilitation Act and VITA accessibility standards.",
-    "lastUpdated": "2026-01-21T18:32:41.519Z"
+    "lastUpdated": "2026-01-21T18:57:58.601Z"
   },
   "assets": [
     {
@@ -60,6 +60,18 @@
       "criticalService": false,
       "createdAt": "2026-01-21T18:32:06.606Z",
       "lastUpdated": "2026-01-21T18:32:06.606Z"
+    },
+    {
+      "id": "a1d8f70d-180c-4aaa-98fa-21d42771fd8e",
+      "name": "dars",
+      "url": "https://easyaccess.virginia.gov/",
+      "type": "Web Application",
+      "environment": "Production",
+      "owner": "Partner",
+      "publicFacing": true,
+      "criticalService": false,
+      "createdAt": "2026-01-21T18:58:47.754Z",
+      "lastUpdated": "2026-01-21T18:58:47.754Z"
     }
   ],
   "scans": [

@@ -14,59 +14,50 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("===== POST /api/evidence/standards START =====");
+  
   try {
+    console.log("1. Parsing request body...");
     const body = await request.json();
-    console.log("POST /api/evidence/standards - received body:", body);
+    console.log("2. Body received:", JSON.stringify(body).substring(0, 200));
     
     const { organizationName, adoptedStandards, policyStatement } = body;
+    console.log("3. Destructured:", { organizationName, adoptedStandardsLength: adoptedStandards?.length, policyStatement });
 
-    if (!organizationName || !adoptedStandards || adoptedStandards.length === 0) {
-      console.warn("Missing required fields:", { organizationName, adoptedStandards });
+    if (!organizationName?.trim() || !adoptedStandards?.length) {
+      console.log("4. Validation failed - missing required fields");
       return NextResponse.json(
-        { error: "Missing required fields: organizationName and adoptedStandards required" },
+        { error: "Missing organization name or standards" },
         { status: 400 }
       );
     }
 
-    // Validate standards
-    const validStandards = ["WCAG 2.2 A/AA", "Section 508", "VITA"];
-    for (const std of adoptedStandards) {
-      if (!validStandards.includes(std)) {
-        console.warn("Invalid standard received:", std);
-        return NextResponse.json(
-          { error: `Invalid standard: ${std}. Must be one of: ${validStandards.join(", ")}` },
-          { status: 400 }
-        );
-      }
-    }
-
+    console.log("5. Creating standards object...");
     const standards: StandardsAdoption = {
       id: uuidv4(),
-      organizationName,
+      organizationName: organizationName.trim(),
       adoptedStandards: adoptedStandards as AccessibilityStandard[],
       adoptionDate: new Date().toISOString().split("T")[0],
-      policyStatement: policyStatement || "",
+      policyStatement: policyStatement?.trim() || "",
       lastUpdated: new Date().toISOString(),
     };
-
-    console.log("Updating standards with:", standards);
-    console.log("About to call evidenceStore.updateStandardsAdoption");
     
+    console.log("6. Calling evidenceStore.updateStandardsAdoption...");
     evidenceStore.updateStandardsAdoption(standards);
-    
-    console.log("Standards saved successfully to file system");
+    console.log("7. Successfully saved!");
 
-    return NextResponse.json(standards, { status: 200 });
+    return NextResponse.json(standards);
   } catch (error) {
-    console.error("=== CATCH BLOCK ERROR ===");
-    console.error("Error type:", error?.constructor?.name);
-    console.error("Error updating standards:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error message extracted:", errorMessage);
-    console.error("Full error object:", { error, errorMessage });
-    console.error("===========================");
+    console.error("ERROR in POST /api/evidence/standards:");
+    console.error("Type:", error?.constructor?.name);
+    console.error("Message:", error instanceof Error ? error.message : String(error));
+    console.error("Full error:", error);
+    
     return NextResponse.json(
-      { error: `Failed to update standards: ${errorMessage}` },
+      { 
+        error: error instanceof Error ? error.message : "Unknown error",
+        type: error?.constructor?.name
+      },
       { status: 500 }
     );
   }
